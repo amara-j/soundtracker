@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="english">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>soundtracker</title>
+	<style>
+		body {
+			background: black;
+			margin: 0px;
+			padding: 0px
+			/* overflow: hidden; */
+		}
+
+		video {
+			display: none;
+			image-rendering: -webkit-pixelated;
+		}
+
+		canvas {
+			transform-origin: "0 0";
+			/* transform: scale(4); */
+			image-rendering: -webkit-pixelated;
+			image-rendering: -moz-pixelated;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="small_canvas" width="128" height="72"></canvas>
+	<video  autoplay src="dogs.mp4"></video>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.68/Tone.js"></script>
+	<script src="script.js"></script>
+</body>
+
+</html>
