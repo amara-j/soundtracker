@@ -6,8 +6,12 @@
 // set recorded audio as audio of video
 // download the video (or just audio)
 
-
 Tone.start()
+
+var loadFile = function (event) {
+    var vid = document.getElementById('output');
+    vid.src = URL.createObjectURL(event.target.files[0]);
+};
 
 let win = window,
 	d = document,
@@ -82,17 +86,11 @@ const playSynth = (position) => {
 }
 
 
-const sample_size = 1
+const sample_size = 2
 const threshold = 100
 let previous_frame = []
 
-
-
-//creating an offscreen canvas
-//update function outside of loop
-// separate draw and update functions
 const offscreenCanvas = document.createElement("canvas")
-
 const offscreenCtx = offscreenCanvas.getContext("2d", { alpha: false })
 offscreenCtx.canvas.width = w;
 offscreenCtx.canvas.height = h;
@@ -108,7 +106,6 @@ const renderOffscreenToActive = () => {
 }
 
 const draw = vid => {
-	//debugger
 	offscreenCtx.drawImage(vid, 0, 0, w, h)
 	const data = offscreenCtx.getImageData(0, 0, w, h).data
 	// for rows and columns in pixel array:
@@ -133,8 +130,6 @@ const draw = vid => {
 				b = Math.floor(Math.random() * 255)
 
 				offscreenCtx.fillStyle = `rgb(${r},${g},${b})`;
-				// console.log(`${rgbToHex(r,g,b)}`)
-				// console.log(r,g,b)
 				offscreenCtx.fillRect(x, y, sample_size, sample_size)
 				previous_frame[pos] = r
 
@@ -163,19 +158,9 @@ const initDraw = async () => {
 }
 initDraw()
 
-
-
-//scale onscreen canvas
-//x is innerWidth, y is innerHeight
-//w is mini canvas width, h is mini canvas height
-
 let scaleX = x / w
 let scaleY = y / h
 
-
-// let scaleToFit = Math.min(scaleX, scaleY)
-// let scaleToCover = Math.max(scaleX, scaleY)
 small_canvas.style.transformOrigin = "0 0" //scale from top left
-// small_canvas.style.transform = `scale(${scaleToFit})`
 
-small_canvas.style.transform = `translateX(${w * scaleX}px) scaleX(${scaleX}) scaleY(${scaleY})` 
+small_canvas.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})` 

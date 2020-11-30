@@ -4,9 +4,10 @@
 <head>
 	<meta charset="UTF-8" />
 	<title>soundtracker</title>
+
 	<style>
 		body {
-			background: black;
+			/* background: black; */
 			margin: 0px;
 			padding: 0px
 			/* overflow: hidden; */
@@ -27,10 +28,12 @@
 </head>
 
 <body>
+	<p><input type="file" accept="video/*" name="vid" id="file" onchange="loadFile(event)"></p>
 	<canvas id="small_canvas" width="128" height="72"></canvas>
-	<video  autoplay src="dogs.mp4"></video>
+	<p><video autoplay id="output" /></p>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.68/Tone.js"></script>
 	<script src="script.js"></script>
+	
 </body>
 
 </html>
