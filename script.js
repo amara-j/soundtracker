@@ -6,11 +6,15 @@
 // set recorded audio as audio of video
 // download the video (or just audio)
 
-Tone.start()
+// window.addEventListener("loaded", ()=>Tone.start())
+
+// window.AudioContext = window.AudioContext || window.webkitAudioContext;
+var video = document.querySelector("video")
 
 var loadFile = function (event) {
-    var vid = document.getElementById('output');
-    vid.src = URL.createObjectURL(event.target.files[0]);
+	Tone.start()
+	video.volume = 0.1
+	video.src = URL.createObjectURL(event.target.files[0]);
 };
 
 let win = window,
@@ -31,63 +35,72 @@ const onresize = e => {
 const midiNotes = [40, 52]
 const notes = midiNotes.map(midinote => Tone.Frequency(midinote, "midi"))
 
-const reverb = new Tone.Reverb().toDestination()
-const delay = new Tone.Delay(0.1).connect(reverb)
-const volume = new Tone.Volume(-12).connect(delay)
 
-const monosynth = new Tone.MonoSynth({
-	oscillator: { type: "sine2" },
-	portamento: 0.5
-}
-).connect(
-	volume
-)
+class AudioSample {
+	constructor(url) {
 
-const duosynth = new Tone.DuoSynth({
-	portamento: 0.5
-}
-).connect(
-	volume
-)
+		this.isPlaying = false
+		this.sample = new Tone.Sampler({
+			urls: {
+				C4: url
+			},
+			onload: () => console.log('sample loaded!', this.sample.sampleTime)
+		}).toDestination()
+		this.sampleTime = this.sample.sampleTime
+	}
 
-const fmsynth = new Tone.FMSynth({
-	portamento: 0.5
+	playSample = (fr) => this.sample.triggerAttackRelease(fr, this.sampleTime)
+
 }
-).connect(
-	volume
-)
+
+const bounceSample = new AudioSample('samples/bounce.wav')
+const d1 = new AudioSample('samples/d1.mp3')
+const c4 = new AudioSample('samples/c4.mp3')
+
+const allSamples = [bounceSample, d1, c4]
+
 
 let isPlaying = false
-const playSynth = (position) => {
-	if (isPlaying) return
+const playAudio = (position) => {
+	// if (isPlaying) return
 	const { x, y } = position
 	const fr = (-500 * y / 72) + 600
 
-	if (x < 42) {
-		monosynth.triggerAttackRelease(fr, 0.2)
-	}
-	else if (42 <= x && x < 85) {
-		duosynth.triggerAttackRelease(fr, 0.2)
-	}
+	allSamples.forEach(sample => {
+		if (sample.isPlaying) return
+		sample.isPlaying = true
+		sample.playSample(fr)
 
-	else if (85 <= x) {
-		fmsynth.triggerAttackRelease(fr, 0.2)
-	}
+		setTimeout(() => sample.isPlaying = false, this.sampleTime * 1000)
 
-	isPlaying = true
+	})
+
+
+	// if (x < 42) {
+	// 	monosynth.triggerAttackRelease(fr, 0.2)
+	// }
+	// else if (42 <= x && x < 85) {
+	// 	duosynth.triggerAttackRelease(fr, 0.2)
+	// }
+
+	// else if (85 <= x) {
+	// 	fmsynth.triggerAttackRelease(fr, 0.2)
+	// }
+
+	// isPlaying = true
 	//fr 100 440
 	// const fr = notes[Math.floor(Math.random() * notes.length)]
 	//monosynth.triggerAttackRelease(fr, 0.2)
 
-	setTimeout(() => {
-		isPlaying = false
-	}, 200)
+	// setTimeout(() => {
+	// 	isPlaying = false
+	// }, 200)
 
 }
 
 
 const sample_size = 2
-const threshold = 100
+const threshold = 30
 let previous_frame = []
 
 const offscreenCanvas = document.createElement("canvas")
@@ -109,6 +122,7 @@ const draw = vid => {
 	offscreenCtx.drawImage(vid, 0, 0, w, h)
 	const data = offscreenCtx.getImageData(0, 0, w, h).data
 	// for rows and columns in pixel array:
+	let movementCounter = 0
 	for (let y = 0; y < h; y += sample_size) {
 		for (let x = 0; x < w; x += sample_size) {
 			// the data array is a continuous array of red, blue, green and alpha values, so each pixel takes up four values in the array
@@ -125,16 +139,18 @@ const draw = vid => {
 				Math.abs(previous_frame[pos] - r) > threshold
 			) {
 				// draw the pixels as blocks of colours
-				r = Math.floor(Math.random() * 255)
-				g = Math.floor(Math.random() * 255)	
-				b = Math.floor(Math.random() * 255)
+				// r = Math.floor(Math.random() * 255)
+				// g = Math.floor(Math.random() * 255)
+				// b = Math.floor(Math.random() * 255)
 
-				offscreenCtx.fillStyle = `rgb(${r},${g},${b})`;
-				offscreenCtx.fillRect(x, y, sample_size, sample_size)
+				// offscreenCtx.fillStyle = `rgb(${r},${g},${b})`;
+				// offscreenCtx.fillRect(x, y, sample_size, sample_size)
 				previous_frame[pos] = r
 
 				//input position x,y
-				playSynth({ x: x, y: y })
+				playAudio({ x: Math.abs(x), y: Math.abs(y) })
+				movementCounter++;
+				console.log(movementCounter)
 			}
 			else {
 				//we shouldn't have to redraw these pixels
@@ -148,12 +164,8 @@ const draw = vid => {
 	window.requestAnimationFrame(() => draw(vid))
 }
 
-
-
-var video = document.querySelector("video")
 const initDraw = async () => {
 	await video
-	console.log("loaded")
 	window.requestAnimationFrame(() => draw(video)) // this only happens once video is loaded
 }
 initDraw()
@@ -163,4 +175,9 @@ let scaleY = y / h
 
 small_canvas.style.transformOrigin = "0 0" //scale from top left
 
-small_canvas.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})` 
+small_canvas.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`
+
+
+// want a fn that quantifies "amount" of movement detected from 0 to 1
+// what percentage of pixels are lighting up from our video?
+

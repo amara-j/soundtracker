@@ -14,11 +14,12 @@
 		}
 
 		video {
-			display: none;
-			image-rendering: -webkit-pixelated;
+			/* display: none; */
+			/* image-rendering: -webkit-pixelated; */
 		}
 
 		canvas {
+			display:none;
 			transform-origin: "0 0";
 			/* transform: scale(4); */
 			image-rendering: -webkit-pixelated;
@@ -28,12 +29,14 @@
 </head>
 
 <body>
-	<p><input type="file" accept="video/*" name="vid" id="file" onchange="loadFile(event)"></p>
+	
+	<p><input type="file" accept="video/*" name="vid" id="file" onchange="loadFile(event)">
+</p>
 	<canvas id="small_canvas" width="128" height="72"></canvas>
-	<p><video autoplay id="output" /></p>
+	<p><video autoplay controls id="output"/></p>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.68/Tone.js"></script>
 	<script src="script.js"></script>
-	
+
 </body>
 
 </html>
