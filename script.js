@@ -1,14 +1,88 @@
-// upload a video file (check for file type)
-// create a URL from that file
-// create a video element that uses URL as a source
-// send video feed into location detection algorithm, start a mediarecorder to record audio
-// eliminate all the pixels
-// set recorded audio as audio of video
-// download the video (or just audio)
+// user invokes tone by clicking file upload button
 
-// window.addEventListener("loaded", ()=>Tone.start())
+const synthA = new Tone.FMSynth().toDestination()
 
-// window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+class Person {
+	constructor(name, location, job = "not specified") {
+		this.name = name
+		this.location = location
+		this.job = job
+	}
+
+	greeting = () => console.log(`hi! i'm ${this.name} i'm from ${this.location}`)
+}
+
+const jack = new Person("jack", "seattle")
+jack.greeting()
+
+
+class Instrument {
+	constructor(url) {
+		this.sampler = new Tone.Sampler({
+			urls: {
+				C2: "https://res.cloudinary.com/dcttcffbc/video/upload/v1597047379/samples/react-sequencer/snare.mp3"
+			},
+			onloaded: () => {
+				this.sampler.triggerAttackRelease("C2", 1)
+				this.hasSampleLoaded = true
+			}
+		}).toDestination();
+		this.hasSampleLoaded = false
+	}
+	play = (note, noteLength, time, velocity = 1) => this.sampler.triggerAttackRelease(note, noteLength, time, velocity)
+}
+
+const firstSampler = new Instrument()
+
+let counter = 0
+const beatCounter = time => {
+	if (counter === 0) {
+		if (firstSampler.hasSampleLoaded) {
+			firstSampler.play('C2', '8n', time)
+		}
+	}
+	counter++
+	counter = counter % 8
+	console.log(counter)
+}
+
+
+let loopTime = Tone.Time("16n").toSeconds() // returns seconds
+const loopA = new Tone.Loop(beatCounter, loopTime)
+
+function startSequencer() {
+	Tone.Transport.bpm.value = 120; // VARIABLE
+	loopA.start(0);
+	loopA.probability = 1;  // amount of movement detected controls loop probability
+	Tone.Transport.start()
+}
+
+//startSequencer()
+// - - - - - - - - - - - - - - - -
+
+
+let isUpdating
+const updateLoopProb = (prob) => {
+
+	if (isUpdating) return
+	console.log(prob)
+	loopA.probability = prob
+	isUpdating = false
+	setTimeout(() => isUpdating = true, loopTime * 1000)
+}
+
+// resized canvas to 100 x 100
+
+
+
+function stopSequencer() {
+	Tone.Transport.stop()
+}
+
+const clampNumber = (num, a, b) => Math.max(Math.min(num, Math.max(a, b)), Math.min(a, b));
+
+
 var video = document.querySelector("video")
 
 var loadFile = function (event) {
@@ -30,77 +104,13 @@ const onresize = e => {
 	w = e.target.outerWidth
 	h = e.target.outerHeight
 }
-// window.addEventListener("resize", onresize)
-//synth plays major scale notes instead of random fr
+
 const midiNotes = [40, 52]
 const notes = midiNotes.map(midinote => Tone.Frequency(midinote, "midi"))
 
 
-class AudioSample {
-	constructor(url) {
-
-		this.isPlaying = false
-		this.sample = new Tone.Sampler({
-			urls: {
-				C4: url
-			},
-			onload: () => console.log('sample loaded!', this.sample.sampleTime)
-		}).toDestination()
-		this.sampleTime = this.sample.sampleTime
-	}
-
-	playSample = (fr) => this.sample.triggerAttackRelease(fr, this.sampleTime)
-
-}
-
-const bounceSample = new AudioSample('samples/bounce.wav')
-const d1 = new AudioSample('samples/d1.mp3')
-const c4 = new AudioSample('samples/c4.mp3')
-
-const allSamples = [bounceSample, d1, c4]
-
-
-let isPlaying = false
-const playAudio = (position) => {
-	// if (isPlaying) return
-	const { x, y } = position
-	const fr = (-500 * y / 72) + 600
-
-	allSamples.forEach(sample => {
-		if (sample.isPlaying) return
-		sample.isPlaying = true
-		sample.playSample(fr)
-
-		setTimeout(() => sample.isPlaying = false, this.sampleTime * 1000)
-
-	})
-
-
-	// if (x < 42) {
-	// 	monosynth.triggerAttackRelease(fr, 0.2)
-	// }
-	// else if (42 <= x && x < 85) {
-	// 	duosynth.triggerAttackRelease(fr, 0.2)
-	// }
-
-	// else if (85 <= x) {
-	// 	fmsynth.triggerAttackRelease(fr, 0.2)
-	// }
-
-	// isPlaying = true
-	//fr 100 440
-	// const fr = notes[Math.floor(Math.random() * notes.length)]
-	//monosynth.triggerAttackRelease(fr, 0.2)
-
-	// setTimeout(() => {
-	// 	isPlaying = false
-	// }, 200)
-
-}
-
-
 const sample_size = 2
-const threshold = 30
+const threshold = 15
 let previous_frame = []
 
 const offscreenCanvas = document.createElement("canvas")
@@ -117,6 +127,8 @@ ctx.imageSmoothingEnabled = false
 const renderOffscreenToActive = () => {
 	ctx.drawImage(offscreenCanvas, 0, 0)
 }
+
+
 
 const draw = vid => {
 	offscreenCtx.drawImage(vid, 0, 0, w, h)
@@ -138,22 +150,17 @@ const draw = vid => {
 				previous_frame[pos] &&
 				Math.abs(previous_frame[pos] - r) > threshold
 			) {
-				// draw the pixels as blocks of colours
-				// r = Math.floor(Math.random() * 255)
-				// g = Math.floor(Math.random() * 255)
-				// b = Math.floor(Math.random() * 255)
-
-				// offscreenCtx.fillStyle = `rgb(${r},${g},${b})`;
-				// offscreenCtx.fillRect(x, y, sample_size, sample_size)
 				previous_frame[pos] = r
+				// //input position x,y
+				// playAudio({ x: Math.abs(x), y: Math.abs(y) })
 
-				//input position x,y
-				playAudio({ x: Math.abs(x), y: Math.abs(y) })
 				movementCounter++;
-				console.log(movementCounter)
+				let normalizedMovementCounter = clampNumber(10 * movementCounter / (h * w), 0, 1)
+				// console.log(normalizedMovementCounter)
+				updateLoopProb(normalizedMovementCounter)
 			}
+
 			else {
-				//we shouldn't have to redraw these pixels
 				offscreenCtx.fillStyle = `rgb(${r},${g},${b})`;
 				offscreenCtx.fillRect(x, y, sample_size, sample_size)
 				previous_frame[pos] = r
@@ -166,6 +173,7 @@ const draw = vid => {
 
 const initDraw = async () => {
 	await video
+	startSequencer()
 	window.requestAnimationFrame(() => draw(video)) // this only happens once video is loaded
 }
 initDraw()
@@ -176,8 +184,3 @@ let scaleY = y / h
 small_canvas.style.transformOrigin = "0 0" //scale from top left
 
 small_canvas.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`
-
-
-// want a fn that quantifies "amount" of movement detected from 0 to 1
-// what percentage of pixels are lighting up from our video?
-

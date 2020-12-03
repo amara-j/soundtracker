@@ -25,12 +25,13 @@
 			image-rendering: -webkit-pixelated;
 			image-rendering: -moz-pixelated;
 		}
+
 	</style>
 </head>
 
 <body>
 	
-	<p><input type="file" accept="video/*" name="vid" id="file" onchange="loadFile(event)">
+	<p><input type="file" accept="video/*" name="vid" id="fileUpload" onchange="loadFile(event)">
 </p>
 	<canvas id="small_canvas" width="128" height="72"></canvas>
 	<p><video autoplay controls id="output"/></p>
